@@ -1,0 +1,9 @@
+{
+  "canvas": { "width": 2048, "height": 2048 },
+  "cardFrame": { "x": 274, "y": 548, "width": 1498, "height": 964 },
+  "textFieldWidthRatio": 0.7,
+  "textFieldTopInsetRatio": 0.13,
+  "textFieldAspect": 0.423828125,
+  "photo": { "x": 354, "y": 830, "width": 380, "height": 488 },
+  "barcode": { "width": 380, "height": 100, "gapBelowPhoto": 80 }
+}
