@@ -77,6 +77,31 @@ body {
   color: var(--muted);
 }
 
+.preview-hint {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.file-warning {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.file-warning code {
+  font-size: 0.8125rem;
+  background: #ffedd5;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .controls {
   display: flex;
   flex-direction: column;
@@ -92,6 +117,34 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-hex-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font: 600 0.75rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.color-hex-input:focus {
+  outline: 2px solid rgba(92, 98, 136, 0.25);
+  border-color: var(--accent);
+}
+
+.color-hex-input--invalid {
+  border-color: #e57373;
+  background: #fff5f5;
 }
 
 .control-label {

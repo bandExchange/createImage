@@ -186,6 +186,48 @@ function colorToCss(hsv) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+function hsvToHex(hsv) {
+  const [r, g, b] = hsvToRgb(hsv.h, hsv.s, hsv.v);
+  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  let h = 0;
+
+  if (delta !== 0) {
+    if (max === r) h = ((g - b) / delta) % 6;
+    else if (max === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  const s = max === 0 ? 0 : (delta / max) * 100;
+  const v = max * 100;
+
+  return { h, s, v };
+}
+
+function parseHexColor(input) {
+  let hex = input.trim();
+  if (!hex) return null;
+  if (!hex.startsWith('#')) hex = `#${hex}`;
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return null;
+
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  };
+}
+
 function parseCssColor(color) {
   const match = color.match(/\d+/g);
   return match ? match.map(Number) : [0, 0, 0];
@@ -406,8 +448,34 @@ function createColorPicker(root) {
   const target = root.dataset.target;
   const svCanvas = root.querySelector('.color-picker__sv');
   const hueCanvas = root.querySelector('.color-picker__hue');
+  const hexInput = root.querySelector('.color-hex-input');
   const svCtx = svCanvas.getContext('2d');
   const hueCtx = hueCanvas.getContext('2d');
+
+  function updateHexInput() {
+    if (!hexInput) return;
+    hexInput.value = hsvToHex(state.colors[target]);
+    hexInput.classList.remove('color-hex-input--invalid');
+  }
+
+  function applyHexInput({ commitInvalid = false } = {}) {
+    if (!hexInput) return false;
+
+    const parsed = parseHexColor(hexInput.value);
+    if (!parsed) {
+      if (commitInvalid) {
+        updateHexInput();
+      } else {
+        hexInput.classList.add('color-hex-input--invalid');
+      }
+      return false;
+    }
+
+    state.colors[target] = rgbToHsv(parsed.r, parsed.g, parsed.b);
+    hexInput.value = hsvToHex(state.colors[target]);
+    hexInput.classList.remove('color-hex-input--invalid');
+    return true;
+  }
 
   function drawSvPlane() {
     const { width, height } = svCanvas;
@@ -485,6 +553,7 @@ function createColorPicker(root) {
   function onColorChange() {
     drawSvPlane();
     drawHueStrip();
+    updateHexInput();
     scheduleRender();
   }
 
@@ -520,8 +589,24 @@ function createColorPicker(root) {
     onColorChange();
   });
 
+  if (hexInput) {
+    hexInput.addEventListener('input', () => {
+      if (applyHexInput()) {
+        drawSvPlane();
+        drawHueStrip();
+        scheduleRender();
+      }
+    });
+
+    hexInput.addEventListener('change', () => {
+      if (!applyHexInput({ commitInvalid: true })) return;
+      onColorChange();
+    });
+  }
+
   drawSvPlane();
   drawHueStrip();
+  updateHexInput();
 }
 
 function loadFileAsImage(file, onLoad) {
@@ -599,3 +684,8 @@ downloadBtn.addEventListener('click', async () => {
 
 document.querySelectorAll('.color-picker').forEach((picker) => createColorPicker(picker));
 scheduleRender();
+
+if (window.location.protocol === 'file:') {
+  const warning = document.getElementById('fileWarning');
+  if (warning) warning.hidden = false;
+}
