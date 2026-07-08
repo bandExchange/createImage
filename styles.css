@@ -119,6 +119,50 @@ body {
   gap: 8px;
 }
 
+.color-target-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.color-target-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.color-target-tab:hover {
+  border-color: #c5cad6;
+  color: var(--text);
+}
+
+.color-target-tab.active {
+  border-color: var(--accent);
+  background: #f0f1f7;
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(92, 98, 136, 0.08);
+}
+
+.color-panel-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-panel-extra[hidden] {
+  display: none !important;
+}
+
 .color-picker {
   display: flex;
   flex-direction: column;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>피드 이미지 생성기</title>
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <div class="app">
@@ -36,8 +36,14 @@
         </div>
 
         <div class="control-group">
-          <span class="control-label">배경</span>
-          <div class="color-picker" data-target="background">
+          <span class="control-label">색상</span>
+          <div class="color-target-tabs" id="colorTargetTabs">
+            <button type="button" class="color-target-tab active" data-target="background">배경</button>
+            <button type="button" class="color-target-tab" data-target="cardFrame">카드 프레임</button>
+            <button type="button" class="color-target-tab" data-target="textField">텍스트</button>
+          </div>
+
+          <div class="color-picker" id="colorPicker">
             <div class="color-picker__body">
               <canvas class="color-picker__sv" width="220" height="140" aria-label="채도와 명도"></canvas>
               <canvas class="color-picker__hue" width="18" height="140" aria-label="색상"></canvas>
@@ -45,53 +51,17 @@
             <input
               type="text"
               class="color-hex-input"
-              data-target="background"
               placeholder="#RRGGBB"
               maxlength="7"
               spellcheck="false"
-              aria-label="배경 색상 코드"
+              aria-label="색상 코드"
             />
           </div>
-          <label class="control-label control-label--sub" for="bgImageInput">배경 이미지 (선택)</label>
-          <input id="bgImageInput" type="file" accept="image/*" />
-          <button type="button" class="ghost-btn" id="clearBgImageBtn" hidden>배경 이미지 제거</button>
-        </div>
 
-        <div class="control-group">
-          <span class="control-label">카드 프레임</span>
-          <div class="color-picker" data-target="cardFrame">
-            <div class="color-picker__body">
-              <canvas class="color-picker__sv" width="220" height="140" aria-label="채도와 명도"></canvas>
-              <canvas class="color-picker__hue" width="18" height="140" aria-label="색상"></canvas>
-            </div>
-            <input
-              type="text"
-              class="color-hex-input"
-              data-target="cardFrame"
-              placeholder="#RRGGBB"
-              maxlength="7"
-              spellcheck="false"
-              aria-label="카드 프레임 색상 코드"
-            />
-          </div>
-        </div>
-
-        <div class="control-group">
-          <span class="control-label">텍스트</span>
-          <div class="color-picker" data-target="textField">
-            <div class="color-picker__body">
-              <canvas class="color-picker__sv" width="220" height="140" aria-label="채도와 명도"></canvas>
-              <canvas class="color-picker__hue" width="18" height="140" aria-label="색상"></canvas>
-            </div>
-            <input
-              type="text"
-              class="color-hex-input"
-              data-target="textField"
-              placeholder="#RRGGBB"
-              maxlength="7"
-              spellcheck="false"
-              aria-label="텍스트 색상 코드"
-            />
+          <div class="color-panel-extra" id="backgroundExtras">
+            <label class="control-label control-label--sub" for="bgImageInput">배경 이미지 (선택)</label>
+            <input id="bgImageInput" type="file" accept="image/*" />
+            <button type="button" class="ghost-btn" id="clearBgImageBtn" hidden>배경 이미지 제거</button>
           </div>
         </div>
 
@@ -109,6 +79,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

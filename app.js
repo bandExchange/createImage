@@ -101,6 +101,7 @@ const state = {
   photo: null,
   backgroundImage: null,
   name: '',
+  activeColorTarget: 'background',
   colors: {
     background: { ...DEFAULT_COLORS.background },
     cardFrame: { ...DEFAULT_COLORS.cardFrame },
@@ -121,6 +122,9 @@ const bgImageInput = document.getElementById('bgImageInput');
 const clearBgImageBtn = document.getElementById('clearBgImageBtn');
 const companyTabs = document.getElementById('companyTabs');
 const downloadBtn = document.getElementById('downloadBtn');
+const colorTargetTabs = document.getElementById('colorTargetTabs');
+const colorPickerRoot = document.getElementById('colorPicker');
+const backgroundExtras = document.getElementById('backgroundExtras');
 
 const DOWNLOAD_COUNTER_KEY = 'feedImageDownloadCounter';
 
@@ -444,8 +448,29 @@ function scheduleRender() {
   });
 }
 
+function initColorTabs(refreshPicker) {
+  if (!colorTargetTabs) return;
+
+  colorTargetTabs.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-target]');
+    if (!button) return;
+
+    state.activeColorTarget = button.dataset.target;
+
+    colorTargetTabs.querySelectorAll('[data-target]').forEach((tab) => {
+      tab.classList.toggle('active', tab === button);
+    });
+
+    if (backgroundExtras) {
+      backgroundExtras.hidden = state.activeColorTarget !== 'background';
+    }
+
+    refreshPicker();
+  });
+}
+
 function createColorPicker(root) {
-  const target = root.dataset.target;
+  const getTarget = () => state.activeColorTarget;
   const svCanvas = root.querySelector('.color-picker__sv');
   const hueCanvas = root.querySelector('.color-picker__hue');
   const hexInput = root.querySelector('.color-hex-input');
@@ -454,7 +479,7 @@ function createColorPicker(root) {
 
   function updateHexInput() {
     if (!hexInput) return;
-    hexInput.value = hsvToHex(state.colors[target]);
+    hexInput.value = hsvToHex(state.colors[getTarget()]);
     hexInput.classList.remove('color-hex-input--invalid');
   }
 
@@ -471,6 +496,7 @@ function createColorPicker(root) {
       return false;
     }
 
+    const target = getTarget();
     state.colors[target] = rgbToHsv(parsed.r, parsed.g, parsed.b);
     hexInput.value = hsvToHex(state.colors[target]);
     hexInput.classList.remove('color-hex-input--invalid');
@@ -481,7 +507,7 @@ function createColorPicker(root) {
     const { width, height } = svCanvas;
     const imageData = svCtx.createImageData(width, height);
     const { data } = imageData;
-    const hue = state.colors[target].h;
+    const hue = state.colors[getTarget()].h;
 
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
@@ -523,8 +549,8 @@ function createColorPicker(root) {
 
   function drawSvCursor() {
     const { width, height } = svCanvas;
-    const x = (state.colors[target].s / 100) * (width - 1);
-    const y = (1 - state.colors[target].v / 100) * (height - 1);
+    const x = (state.colors[getTarget()].s / 100) * (width - 1);
+    const y = (1 - state.colors[getTarget()].v / 100) * (height - 1);
     svCtx.save();
     svCtx.strokeStyle = '#fff';
     svCtx.lineWidth = 2;
@@ -539,7 +565,7 @@ function createColorPicker(root) {
 
   function drawHueCursor() {
     const { width, height } = hueCanvas;
-    const y = (state.colors[target].h / 360) * (height - 1);
+    const y = (state.colors[getTarget()].h / 360) * (height - 1);
     hueCtx.save();
     hueCtx.strokeStyle = '#fff';
     hueCtx.lineWidth = 2;
@@ -555,6 +581,12 @@ function createColorPicker(root) {
     drawHueStrip();
     updateHexInput();
     scheduleRender();
+  }
+
+  function refreshPicker() {
+    drawSvPlane();
+    drawHueStrip();
+    updateHexInput();
   }
 
   function bindDrag(canvasEl, onMove) {
@@ -578,6 +610,7 @@ function createColorPicker(root) {
 
   bindDrag(svCanvas, (x, y) => {
     const { width, height } = svCanvas;
+    const target = getTarget();
     state.colors[target].s = Math.max(0, Math.min(100, (x / (width - 1)) * 100));
     state.colors[target].v = Math.max(0, Math.min(100, (1 - y / (height - 1)) * 100));
     onColorChange();
@@ -585,6 +618,7 @@ function createColorPicker(root) {
 
   bindDrag(hueCanvas, (_x, y) => {
     const { height } = hueCanvas;
+    const target = getTarget();
     state.colors[target].h = Math.max(0, Math.min(360, (y / (height - 1)) * 360));
     onColorChange();
   });
@@ -592,9 +626,7 @@ function createColorPicker(root) {
   if (hexInput) {
     hexInput.addEventListener('input', () => {
       if (applyHexInput()) {
-        drawSvPlane();
-        drawHueStrip();
-        scheduleRender();
+        onColorChange();
       }
     });
 
@@ -607,6 +639,8 @@ function createColorPicker(root) {
   drawSvPlane();
   drawHueStrip();
   updateHexInput();
+
+  return { refresh: refreshPicker };
 }
 
 function loadFileAsImage(file, onLoad) {
@@ -682,7 +716,8 @@ downloadBtn.addEventListener('click', async () => {
   }
 });
 
-document.querySelectorAll('.color-picker').forEach((picker) => createColorPicker(picker));
+const colorPicker = colorPickerRoot ? createColorPicker(colorPickerRoot) : null;
+initColorTabs(() => colorPicker?.refresh());
 scheduleRender();
 
 if (window.location.protocol === 'file:') {
