@@ -135,6 +135,84 @@ function getNextDownloadFilename() {
   return `feedImage${String(next).padStart(2, '0')}.png`;
 }
 
+function isIOSDevice() {
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/.test(ua);
+  const iPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return iOS || iPadOS;
+}
+
+function canvasToBlob(sourceCanvas, type = 'image/png', quality) {
+  return new Promise((resolve, reject) => {
+    if (typeof sourceCanvas.toBlob === 'function') {
+      sourceCanvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+        reject(new Error('canvas.toBlob failed'));
+      }, type, quality);
+      return;
+    }
+
+    try {
+      const dataUrl = sourceCanvas.toDataURL(type, quality);
+      const [header, data] = dataUrl.split(',');
+      const mime = header.match(/:(.*?);/)?.[1] || type;
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      resolve(new Blob([bytes], { type: mime }));
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function shareOrDownloadPng(blob, filename) {
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  if (isIOSDevice() && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      console.warn('Web Share failed, falling back to blob open:', error);
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+
+  if (isIOSDevice()) {
+    const opened = window.open(url, '_blank');
+    if (!opened) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return;
+  }
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 1000);
+}
+
 function loadImage(src) {
   if (images[src]) return images[src];
   images[src] = new Promise((resolve, reject) => {
@@ -707,12 +785,12 @@ companyTabs.addEventListener('click', (event) => {
 downloadBtn.addEventListener('click', async () => {
   try {
     await render();
-    const link = document.createElement('a');
-    link.download = getNextDownloadFilename();
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    const filename = getNextDownloadFilename();
+    const blob = await canvasToBlob(canvas, 'image/png');
+    await shareOrDownloadPng(blob, filename);
   } catch (error) {
     console.error(error);
+    alert('이미지 저장에 실패했습니다. 다시 시도해 주세요.');
   }
 });
 
